@@ -4,20 +4,24 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 # get correct id for plugin
 $thisfile = basename(__FILE__, ".php");
+define('THISFILE_FAQ', $thisfile);
+
+# add in this plugin's language file
+i18n_merge($thisfile) || i18n_merge( $thisfile, 'en_US');
 
 # register plugin
 register_plugin(
-	$thisfile, 
-	'FAQ Manager', 	
+	$thisfile, // ID of plugin, should be filename minus php
+	i18n_r(THISFILE_FAQ.'/PLUGIN_TITLE'), 	
 	'1.1', 		
 	'Mike Henken',
 	'http://michaelhenken.com/', 
-	'Manage frequently asked questions',
+	i18n_r(THISFILE_FAQ.'/PLUGIN_DESC'),
 	'pages',
 	'FAQ_Admin'  
 );
 
-add_action('pages-sidebar','createSideMenu',array($thisfile,'F.A.Q. Manager'));
+add_action('pages-sidebar','createSideMenu',array($thisfile, i18n_r(THISFILE_FAQ.'/PLUGIN_SIDE')));
 define('FAQLimit', 4);
 define('FAQFile', GSDATAOTHERPATH  . 'faq.xml');
 add_filter('content','faq_replace');
@@ -47,7 +51,7 @@ class FAQ
 			$xml = new SimpleXMLExtended('<?xml version="1.0" encoding="UTF-8"?><channel></channel>');
 			if(XMLsave($xml, FAQFile))
 			{
-					echo '<div class="updated">File Succesfully Written</div>';
+					echo '<div class="updated">', i18n_r(THISFILE_FAQ.'/WRITE_OK'), '</div>';
 			}
 		}
 	}
@@ -136,19 +140,19 @@ class FAQ
 		{
 			if($edit != null && $delete_category == null && $delete_faq == null)
 			{
-				echo '<div class="updated">File Successfully Edited</div>';
+				echo '<div class="updated">', i18n_r(THISFILE_FAQ.'/EDIT_OK'), '</div>';
 			}
 			elseif($edit != null && $delete_faq != null)
 			{
-				echo '<div class="updated">Question Successfully Deleted</div>';
+				echo '<div class="updated">', i18n_r(THISFILE_FAQ.'/QDELETED'), '</div>';
 			}
 			elseif($delete_category != null)
 			{
-				echo '<div class="updated">Category Successfully Deleted</div>';
+				echo '<div class="updated">', i18n_r(THISFILE_FAQ.'/CATDELETED'), '</div>';
 			}
 			else
 			{
-				echo '<div class="updated">Successfully Created</div>';
+				echo '<div class="updated">', i18n_r(THISFILE_FAQ.'/CATCREATED'), '</div>';
 			}
 		}
 	}
@@ -162,11 +166,11 @@ class FAQ
 	{
 	?>
 		<div style="width:100%;margin:0 -15px -15px -10px;padding:0px;">
-			<h3 class="floated">FAQ Manager</h3>
+			<h3 class="floated"><?php i18n(THISFILE_FAQ.'/PLUGIN_TITLE'); ?></h3>
 			<div class="edit-nav clearfix" style="">
-				<a href="load.php?id=faq&faq_help" <?php if (isset($_GET['faq_help'])) { echo 'class="current"'; } ?>>Help</a>
-				<a href="load.php?id=faq&faq_categories" <?php if (isset($_GET['faq_categories'])) { echo 'class="current"'; } ?>>Categories</a>
-				<a href="load.php?id=faq">View All</a>
+				<a href="load.php?id=faq&faq_help" <?php if (isset($_GET['faq_help'])) echo 'class="current"'; i18n(THISFILE_FAQ.'/HELP'); ?></a>
+				<a href="load.php?id=faq&faq_categories" <?php if (isset($_GET['faq_categories'])) echo 'class="current"'; i18n(THISFILE_FAQ.'/CATEGORIES'); ?></a>
+				<a href="load.php?id=faq"><?php i18n(THISFILE_FAQ.'/VIEW_ALL'); ?></a>
 			</div> 
 		</div>
 		</div>
@@ -178,9 +182,9 @@ class FAQ
 	{
 		$faq_file = getXML(FAQFile);
 	?>
-		<h3 class="floated">All FAQ</h3>
+		<h3 class="floated"><?php i18n(THISFILE_FAQ.'/ALL_FAQ'); ?></h3>
 			<div class="edit-nav clearfix" style="">
-				<a href="load.php?id=faq&add_faq" class="ra_help_button">Add New Question</a>
+				<a href="load.php?id=faq&add_faq" class="ra_help_button"><?php i18n(THISFILE_FAQ.'/ADD_Q'); ?></a>
 		</div>
 		
 	<?php
@@ -199,18 +203,18 @@ class FAQ
 				?>
 				<tr>
 					<td>
-						<a href="load.php?id=faq&edit_faq=<?php echo $atts['title']; ?>" title="Edit Content: <?php echo $atts['title']; ?>">
+						<a href="load.php?id=faq&edit_faq=<?php echo urlencode($atts['title']); ?>" title="<?php i18n(THISFILE_FAQ.'/EDIT_CONTENT'); echo str_replace('"', "&quot;", $atts['title']); ?>">
 						<?php echo $atts['title']; ?>
 						</a>
 					</td>
 					<td class="delete">
-						<a href="load.php?id=faq&delete=<?php echo $atts['title']; ?>&category_of_deleted=<?php echo $c_atts['name']; ?>" class="delconfirm" title="Delete Content: <?php echo $atts['title']; ?>?">X</a>
+						<a href="load.php?id=faq&delete=<?php echo urlencode($atts['title']); ?>&category_of_deleted=<?php echo urlencode($c_atts['name']); ?>" class="delconfirm" title="<?php i18n(THISFILE_FAQ.'/DEL_CONTENT'); echo str_replace('"', "&quot;", $atts['title']); ?>?">X</a>
 					</td>
 				</tr>
 <?php
 			}
 			echo '</table>';
-			echo '<p><b>' . $content_count . '</b> questions</p>';
+			echo '<p><b>', $content_count, '</b> ', i18n_r(THISFILE_FAQ.'/QUESTIONS'), '</p>';
 		}
 	}
 	
@@ -223,19 +227,19 @@ class FAQ
 	{
 		if($edit_faq != null)
 		{	
-			$faq_title = $this->getFAQData($edit_faq, 'title');
-			$faq_edit_add = 'Edit '.$edit_faq;
+			$faq_title = str_replace('"', "&quot;", $this->getFAQData($edit_faq, 'title'));
+			$faq_edit_add = i18n_r(THISFILE_FAQ.'/EDIT').$edit_faq;
 			$faq_category = $this->getFAQData($edit_faq, 'category');
 			$faq_content = $this->getFAQData($edit_faq, 'content');
 			$add_new_hidden_field = '
-			<input type="hidden" name="edit_faq" value="'.$edit_faq.'" />
+			<input type="hidden" name="edit_faq" value="'.str_replace('"', "&quot;", $edit_faq).'" />
 			<input type="hidden" name="old-title" value="'.$faq_title.'" />
 			';
 		}
 		else
 		{
-			$faq_edit_add = 'Add New Question';
-			$faq_title = 'Title..';
+			$faq_edit_add = i18n_r(THISFILE_FAQ.'/ADD_Q'); //'Add New Question';
+			$faq_title = i18n_r(THISFILE_FAQ.'/TITLE');
 			$faq_category = '';
 			$faq_content = '';
 			$add_new_hidden_field = '<input type="hidden" name="add_new_faq" />';
@@ -245,7 +249,7 @@ class FAQ
 		<h3><?php echo $faq_edit_add; ?></h3>
 		<form action="" method="post" accept-charset="utf-8">
 			<?php echo $add_new_hidden_field; ?>
-			<input type="text" name="title" class="text" style="width:635px;" value="<?php echo $faq_title; ?>" onFocus="if(this.value == 'Title..') {this.value = '';}" onBlur="if (this.value == '') {this.value = 'Title..';}" />
+			<input type="text" name="title" class="text" style="width:635px;" value="<?php echo $faq_title; ?>" onFocus="if(this.value == '<?php i18n(THISFILE_FAQ.'/TITLE'); ?>') {this.value = '';}" onBlur="if (this.value == '') {this.value = '<?php i18n(THISFILE_FAQ.'/TITLE'); ?>';}" />
 			<select name="category" class="text" style="width:647px;margin:5px 0px 5px 0px">
 				<?php
 					if($edit_faq != null)
@@ -255,7 +259,7 @@ class FAQ
 					else 
 					{
 						$selected_choice = '';
-						echo '<option value="">Choose Category...</option>';
+						echo '<option value="">', i18n_r(THISFILE_FAQ.'/CHOOSECAT'), '</option>';
 					}
 					$content_file = getXML(FAQFile);
 					foreach($content_file->category as $edit_cate)
@@ -263,11 +267,11 @@ class FAQ
 						$atts = $edit_cate->attributes();
 						if($selected_choice == $atts['name'])
 						{
-							echo '<option value="'.$selected_choice.'">'.$selected_choice.'</option>';
+							echo '<option value="', $selected_choice, '">', $selected_choice, '</option>';
 						}
 						else
 						{
-							echo '<option value="'.$atts['name'].'">'.$atts['name'].'</option>';
+							echo '<option value="', $atts['name'], '">', $atts['name'], '</option>';
 						}
 					}
 				?>
@@ -292,7 +296,7 @@ class FAQ
 				})
 			  });
 			</script><br/>
-			<input type="submit" class="submit" value="Add Content" style="float:right;"/>
+			<input type="submit" class="submit" value="<?php i18n(THISFILE_FAQ.'/ADD_CONTENT'); ?>" style="float:right;"/>
 		</form>
 		<div style="clear:both">&nbsp;</div>
 		<?php
@@ -303,18 +307,18 @@ class FAQ
 	{
 		$faq_data = getXML(FAQFile);
 	?>
-		<h3 class="floated">Manage Categories</h3>
+		<h3 class="floated"><?php i18n(THISFILE_FAQ.'/MANAGECAT'); ?></h3>
 		<div class="edit-nav clearfix" style="">
-				<a href="#" class="ra_help_button">Add New Category</a>
+				<a href="#" class="ra_help_button"><?php i18n(THISFILE_FAQ.'/ADD_NCAT'); ?></a>
 		</div>
 		<div class="ra_help" style="display:none;padding:10px;background-color:#f6f6f6;margin:10px;">
-			<h3>Add Category</h3>  
+			<h3><?php i18n(THISFILE_FAQ.'/ADD_CAT'); ?></h3>  
 			<form action="" method="post" accept-charset="utf-8">
 				<input type="hidden" name="new_category" />
 				<p>
-					<input type="text" name="title" class="text" style="width:600px;" value="Category Title.." onFocus="if(this.value == 'Category Title..') {this.value = '';}" onBlur="if (this.value == '') {this.value = 'Category Title..';}" />
+					<input type="text" name="title" class="text" style="width:600px;" value="<?php i18n(THISFILE_FAQ.'/CAT_TITLE'); ?>" onFocus="if(this.value == '<?php i18n(THISFILE_FAQ.'/CAT_TITLE'); ?>') {this.value = '';}" onBlur="if (this.value == '') {this.value = '<?php i18n(THISFILE_FAQ.'/CAT_TITLE'); ?>';}" />
 				</p>
-				<input type="submit" class="submit" value="Add Category" style="float:right;"/>
+				<input type="submit" class="submit" value="<?php i18n(THISFILE_FAQ.'/ADD_CAT'); ?>" style="float:right;"/>
 			</form>		
 			<div style="clear:both">&nbsp;</div>
 			<script type="text/javascript">
@@ -341,11 +345,11 @@ class FAQ
 			<tr>
 				<td>
 							<input class="title<?php echo $showings_count; ?>" style="display:none;width:270px;float:left;" name="title" value="<?php echo $c_atts['name']; ?>">
-							<input class="submit<?php echo $showings_count; ?>" type="submit" value="Submit?" style="display:none;float:right;margin-right:30px;padding:2px;font-size:10px;" />
+							<input class="submit<?php echo $showings_count; ?>" type="submit" value="<?php i18n(THISFILE_FAQ.'/SUBMITQ'); ?>" style="display:none;float:right;margin-right:30px;padding:2px;font-size:10px;" />
 							<span class="title<?php echo $showings_count; ?>" ONCLICK="showinput('title<?php echo $showings_count; ?>','submit<?php echo $showings_count; ?>')" style="color:inherit;font-size:inherit;line-height:inherit;"><?php echo $c_atts['name']; ?></span>
 				</td>
 				<td class="delete">
-					<a href="load.php?id=faq&faq_categories&delete_category=<?php echo $c_atts['name']; ?>" class="delconfirm" title="Delete Category: <?php echo $c_atts['name']; ?>?? This Will Delete ALL* content In The Category As Well!">
+					<a href="load.php?id=faq&faq_categories&delete_category=<?php echo urlencode($c_atts['name']); ?>" class="delconfirm" title="<?php i18n(THISFILE_FAQ.'/DEL_CAT1'); echo str_replace('"', "&quot;", $c_atts['name']); i18n(THISFILE_FAQ.'/DEL_CAT2'); ?>">
 					X
 					</a>
 				</td>
@@ -363,22 +367,23 @@ class FAQ
 			</script>
 			</table>
 		<?php
-		echo '<p><b>' . $content_count . '</b> content</p>';	
+		echo '<p><b>', $content_count, '</b> ', i18n_r(THISFILE_FAQ.'/CONTENT'), '</p>';	
 	}
 	
 	public function showHelp()
 	{
 		?>
-		<h3>FAQ Plugin Instructions</h3>
-		<strong>The below function will display all FAQ categories and questions.</strong><br/>It is to be used from within your theme template files:<br/>
+		<h3><?php i18n(THISFILE_FAQ.'/INSTR1'); ?></h3>
+		<?php i18n(THISFILE_FAQ.'/INSTR2'); ?><br/>
 		<?php highlight_string('<?php getFAQ(); ?>'); ?><br/><br/>
-		<strong>You can also pass a catgory name as an Arguement.</strong><br/>Doing this will only display that category and its questions<br/>
-		<?php highlight_string('<?php getFAQ(\'Your Category Name\'); ?>'); ?><br/><br/><br/>
-		<strong>To show a category of FAQ from within a page use the following coding:</strong><br/>
-		This will show posts on your page from the category you specify<br/>
-		<pre>{$ Your Category Name $}</pre>
+		<?php i18n(THISFILE_FAQ.'/INSTR3'); ?><br/>
+		<?php highlight_string('<?php getFAQ(\''.i18n_r(THISFILE_FAQ.'/YR_CATNAME').'\'); ?>'); ?><br/><br/><br/>
+		<strong><?php i18n(THISFILE_FAQ.'/INSTR4'); ?></strong><br/>
+		<?php i18n(THISFILE_FAQ.'/INSTR5'); ?><br/>
+		<pre>{$ <?php i18n(THISFILE_FAQ.'/YR_CATNAME'); ?> $}</pre>
 		<?php
 	}
+	
 	
 	/*********
 	Front End Functions
