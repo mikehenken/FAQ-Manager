@@ -1,7 +1,8 @@
 <?php
-
+/*
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
+//*/
 # get correct id for plugin
 $thisfile = basename(__FILE__, ".php");
 define('THISFILE_FAQ', $thisfile);
@@ -13,7 +14,7 @@ i18n_merge($thisfile) || i18n_merge( $thisfile, 'en_US');
 register_plugin(
 	$thisfile, // ID of plugin, should be filename minus php
 	i18n_r(THISFILE_FAQ.'/PLUGIN_TITLE'), 	
-	'1.1', 		
+	'1.2', 		
 	'Mike Henken',
 	'http://michaelhenken.com/', 
 	i18n_r(THISFILE_FAQ.'/PLUGIN_DESC'),
