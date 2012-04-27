@@ -92,7 +92,7 @@ class FAQ
 			$c_atts= $category->attributes();
 			if($delete_category != null && $delete_category == $c_atts['name'])
 			{
-				//Do nothign. Do not add it to new xml file
+				//Do nothing. Do not add it to new xml file
 			}
 			elseif($edit_category != null && $edit_category == $c_atts['name'])
 			{
@@ -116,9 +116,15 @@ class FAQ
 				}
 				else
 				{
-					$child = $c_child->addChild('content');
-					$child->addAttribute('title', $atts['title']);
-					$child->addCData($content);
+					if($delete_faq != null && $_GET['category_of_deleted'] ==  $c_atts['name'] && $_GET['delete'] == $atts['title'])
+					{
+						//Do nothing. Do not add it to new xml file
+					}
+					else {
+						$child = $c_child->addChild('content');
+						$child->addAttribute('title', $atts['title']);
+						$child->addCData($content);
+					}
 				}
 			}
 			
@@ -238,7 +244,7 @@ class FAQ
 		}
 		else
 		{
-			$faq_edit_add = i18n_r(THISFILE_FAQ.'/ADD_Q'); //'Add New Question';
+			$faq_edit_add = i18n_r(THISFILE_FAQ.'/ADD_Q'); 
 			$faq_title = i18n_r(THISFILE_FAQ.'/TITLE');
 			$faq_category = '';
 			$faq_content = '';
@@ -340,7 +346,7 @@ class FAQ
 			$showings_count++;
 			$c_atts= $category->attributes();
 			?>
-			<form action="" method="POST">
+			<form action="" method="post">
 				<input type="hidden" name="edit_category_name" value="<?php echo $c_atts['name']; ?>"/>
 			<tr>
 				<td>
@@ -446,6 +452,10 @@ function FAQ_Admin()
 			$FAQ->processFAQData(null,null,$_POST['edit_category_name']);
 		}
 		$FAQ->showEditCategory();
+	}
+	elseif(isset($_GET['delete']) && isset($_GET['category_of_deleted']))
+	{
+		$FAQ->processFAQData(null,null,null,$_GET['delete']);
 	}
 	elseif(isset($_GET['faq_help']))
 	{
